@@ -11,7 +11,6 @@
       <div class="shadow sm:rounded-md sm:overflow-hidden">
         <!-- Survey fields -->
         <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
-          <pre>{{ model }}</pre>
           <!-- Image -->
           <div>
             <label class="block text-sm font-medium text-gray-700">Image</label>
