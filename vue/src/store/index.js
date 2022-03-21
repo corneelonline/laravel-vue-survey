@@ -1,5 +1,5 @@
-import {createStore} from "vuex";
-import axiosClient from '../axios';
+import { createStore } from "vuex";
+import axiosClient from "../axios";
 
 export const store = createStore({
   state: {
@@ -108,7 +108,7 @@ export const store = createStore({
       sessionStorage.setItem('TOKEN', userData.token);
     },
   },
-  modules: {}
-})
+  modules: {},
+});
 
 export default store;

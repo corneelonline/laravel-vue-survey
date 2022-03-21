@@ -3,7 +3,7 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
-use URL;
+use Illuminate\Support\Facades\URL;
 
 class SurveyResource extends JsonResource
 {

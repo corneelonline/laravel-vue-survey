@@ -2,17 +2,32 @@
 
 namespace App\Http\Controllers;
 
+// use App\Http\Requests\StoreSurveyRequest;
+// use App\Http\Requests\UpdateSurveyRequest;
+// use App\Models\Survey;
+// use Illuminate\Http\Request;
+// use App\Http\Resources\SurveyResource;
+// use Illuminate\Support\Facades\File;
+// use Illuminate\Support\Str;
+// use Illuminate\Validation\Rule;
+// use App\Models\SurveyQuestion;
+// use Illuminate\Support\Facades\Validator;
+// use Illuminate\Support\Arr;
+
+use App\Http\Requests\StoreSurveyAnswerRequest;
+use App\Http\Resources\SurveyResource;
+use App\Models\Survey;
 use App\Http\Requests\StoreSurveyRequest;
 use App\Http\Requests\UpdateSurveyRequest;
-use App\Models\Survey;
+use App\Models\SurveyAnswer;
+use App\Models\SurveyQuestion;
+use App\Models\SurveyQuestionAnswer;
 use Illuminate\Http\Request;
-use App\Http\Resources\SurveyResource;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use App\Models\SurveyQuestion;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Arr;
 
 class SurveyController extends Controller
 {
@@ -67,6 +82,7 @@ class SurveyController extends Controller
         if ($user->id !== $survey->user_id) {
             return abort(403, 'Unauthorized action');
         }
+
         return new SurveyResource($survey);
     }
 
@@ -96,7 +112,6 @@ class SurveyController extends Controller
         // Update survey in the database
         $survey->update($data);
 
-        // Steps to update tghe questions
         // Get ids as plain array of existing questions
         $existingIds = $survey->questions()->pluck('id')->toArray();
         // Get ids as plain array of new questions
@@ -105,8 +120,10 @@ class SurveyController extends Controller
         $toDelete = array_diff($existingIds, $newIds);
         // Find questions to add
         $toAdd = array_diff($newIds, $existingIds);
+
         // Delete questions by $toDelete array
         SurveyQuestion::destroy($toDelete);
+
         // Create new questions
         foreach ($data['questions'] as $question) {
             if (in_array($question['id'], $toAdd)) {
@@ -114,6 +131,7 @@ class SurveyController extends Controller
                 $this->createQuestion($question);
             }
         }
+
         // Update existing questions
         $questionMap = collect($data['questions'])->keyBy('id');
         foreach ($survey->questions as $question) {
@@ -147,41 +165,6 @@ class SurveyController extends Controller
         }
 
         return response('', 204);
-    }
-
-    private function saveImage($image)
-    {
-        // Check if the image is valid base64 string
-        if (preg_match('/^data:image\/(\w+);base64,/', $image, $type)) {
-            // Take out the base64 encoded text without mime type
-            $image = substr($image, strpos($image, ',') + 1);
-            // Get file extension
-            $type = strtolower($type[1]); // jpg, png, gif
-
-            // Check if the file is an image
-            if (!in_array($type, ['jpg', 'jpeg', 'gif', 'png'])) {
-                throw new \Exception('invalid image type');
-            }
-            $image = str_replace(' ', '+', $image);
-            $image = base64_decode($image);
-
-            if ($image === false) {
-                throw new \Exception('base64_decode failed');
-            }
-        } else {
-            throw new \Exception('did not match data URI with image data');
-        }
-
-        $dir = 'images/';
-        $file = Str::random() . '.' . $type;
-        $absolutePath = public_path($dir);
-        $relativePath = $dir . $file;
-        if (!File::exists($absolutePath)) {
-            File::makeDirectory($absolutePath, 0755, true);
-        }
-        file_put_contents($relativePath, $image);
-
-        return $relativePath;
     }
 
     private function createQuestion($data)
@@ -226,5 +209,40 @@ class SurveyController extends Controller
         ]);
 
         return $question->update($validator->validated());
+    }
+
+    private function saveImage($image)
+    {
+        // Check if the image is valid base64 string
+        if (preg_match('/^data:image\/(\w+);base64,/', $image, $type)) {
+            // Take out the base64 encoded text without mime type
+            $image = substr($image, strpos($image, ',') + 1);
+            // Get file extension
+            $type = strtolower($type[1]); // jpg, png, gif
+
+            // Check if the file is an image
+            if (!in_array($type, ['jpg', 'jpeg', 'gif', 'png'])) {
+                throw new \Exception('invalid image type');
+            }
+            $image = str_replace(' ', '+', $image);
+            $image = base64_decode($image);
+
+            if ($image === false) {
+                throw new \Exception('base64_decode failed');
+            }
+        } else {
+            throw new \Exception('did not match data URI with image data');
+        }
+
+        $dir = 'images/';
+        $file = Str::random() . '.' . $type;
+        $absolutePath = public_path($dir);
+        $relativePath = $dir . $file;
+        if (!File::exists($absolutePath)) {
+            File::makeDirectory($absolutePath, 0755, true);
+        }
+        file_put_contents($relativePath, $image);
+
+        return $relativePath;
     }
 }
